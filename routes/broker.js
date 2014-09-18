@@ -1,7 +1,14 @@
+var request = require('request');
 var express = require('express');
+var uuid = require('node-uuid');
 var router = express.Router();
 
-/* GET users listing. */
+var db = {
+  instances: {}, // instance_guid-to-docker_guid association
+  bindings: {}, // binding_guid-to-app_guid association
+}
+
+/* cf marketplace */
 router.get('/catalog', function(req, res) {
   res.status(200).json({
     services: [{
@@ -32,16 +39,64 @@ STATUS CODE DESCRIPTION
 
 RESPONSE FIELD  TYPE  DESCRIPTION
 dashboard_url string  The URL of a web-based management user interface for the service instance; we refer to this as a service dashboard. The URL should contain enough information for the dashboard to identify the resource being accessed (“9189kdfsk0vfnku” in the example below). For information on how users can authenticate with service dashboards via SSO, see Dashboard Single Sign-On.
-
 */
+/* cf create-service */
 router.put('/service_instances/:id', function(req, res) {
+  var dashboard_url = 'http://pivotal.io';
   console.log('BODY', req.body);
   console.log('PARAMS', req.params);
-  res.status(201).json({
-    dashboard_url: 'http://pivotal.io'
-  });
+  //{"name"=>"cf-3394a0b4-7892-43ab-92c0-8b0d032b5d24", "Entrypoint"=>nil, "DisableNetwork"=>false}
+
+  // Check to see if the requested service instance already exists
+  if (db[req.params.id]) {
+    res.status(409).json({});
+  } else {
+    request.post(process.env.DOCKER_URL + '/containers/create', {
+      json: {
+        "Hostname":"",
+        "Domainname": "",
+        "User":"",
+        "Memory":0,
+        "MemorySwap":0,
+        "CpuShares":null,
+        "Cpuset": "0,1",
+        "AttachStdin":false,
+        "AttachStdout":true,
+        "AttachStderr":true,
+        "PortSpecs":null,
+        "Tty":false,
+        "OpenStdin":false,
+        "StdinOnce":false,
+        "Env":[
+          "username=postgres",
+          "password=postgres"
+        ],
+        "Cmd":[],
+        "Image":"frodenas/postgresql:latest",
+        "Volumes":{},
+        "WorkingDir":null,
+        "NetworkDisabled": false,
+        "ExposedPorts":{}
+      }
+    }, function (err, response, body) {
+      if (err) {
+        console.error('DOCKER CREATE ERROR:', err);
+        res.status(500).json({
+          error: err
+        });
+      } else {
+        console.log('DOCKER CREATE RESULT:', response);
+        // store a guid associated with this instance
+        db[req.params.id] = response;
+        res.status(201).json({
+          dashboard_url: dashboard_url
+        });
+      }
+    });
+  }
 });
 
+/* cf delete-service */
 /*
 QUERY-STRING FIELD  TYPE  DESCRIPTION
 service_id* string  ID of the service from the catalog. While not strictly necessary, some brokers might make use of this ID.
@@ -55,6 +110,8 @@ STATUS CODE DESCRIPTION
 router.delete('/service_instances/:id', function(req, res) {
   console.log('BODY', req.body);
   console.log('PARAMS', req.params);
+  // FIXME: container.kill, container.remove, remove guid and association for instance!!!
+  delete db[req.params.id];
   res.status(200);
 });
 
@@ -74,9 +131,11 @@ credentials object  A free-form hash of credentials that the bound application c
 syslog_drain_url  string  A URL to which Cloud Foundry should drain logs to for the bound application. The syslog_drain permission is required for logs to be automatically wired to applications.
 
 */
+/* cf bind-service */
 router.put('/service_instances/:instance_id/service_bindings/:id', function(req, res) {
   console.log('BODY', req.body);
   console.log('PARAMS', req.params);
+  // FIXME: Lookup binding association by binding guid (create if not exists) and return creds!!!
   res.status(201).json({
     credentials: {
       uri: 'http://super-awesome-endpoint.com'
@@ -95,6 +154,7 @@ STATUS CODE DESCRIPTION
 410 Gone  Shall be returned if the binding does not exist. The expected response body is “{}”
 
 */
+/* cf unbind-service */
 router.delete('/service_instances/:instance_id/service_bindings/:id', function(req, res) {
   console.log('BODY', req.body);
   console.log('PARAMS', req.params);
