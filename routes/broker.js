@@ -3,7 +3,7 @@ var router = express.Router();
 
 /* GET users listing. */
 router.get('/catalog', function(req, res) {
-  res.json({
+  res.status(200).json({
     services: [{
       id: '12345', //  string  An identifier used to correlate this service in future requests to the catalog. This must be unique within Cloud Foundry, using a GUID is recommended.
       name: 'awesome-sauce', // string  The CLI-friendly name of the service that will appear in the catalog. All lowercase, no spaces.
@@ -35,7 +35,11 @@ dashboard_url string  The URL of a web-based management user interface for the s
 
 */
 router.put('/service_instances/:id', function(req, res) {
-  res.send('respond with a resource');
+  console.log('BODY', req.body);
+  console.log('PARAMS', req.params);
+  res.status(201).json({
+    dashboard_url: 'http://pivotal.io'
+  });
 });
 
 /*
@@ -49,7 +53,9 @@ STATUS CODE DESCRIPTION
 
 */
 router.delete('/service_instances/:id', function(req, res) {
-  res.send('respond with a resource');
+  console.log('BODY', req.body);
+  console.log('PARAMS', req.params);
+  res.status(200);
 });
 
 /*
@@ -69,7 +75,14 @@ syslog_drain_url  string  A URL to which Cloud Foundry should drain logs to for 
 
 */
 router.put('/service_instances/:instance_id/service_bindings/:id', function(req, res) {
-  res.send('respond with a resource');
+  console.log('BODY', req.body);
+  console.log('PARAMS', req.params);
+  res.status(201).json({
+    credentials: {
+      uri: 'http://super-awesome-endpoint.com'
+    },
+    syslog_drain_url: ''
+  });
 });
 
 /*
@@ -83,7 +96,9 @@ STATUS CODE DESCRIPTION
 
 */
 router.delete('/service_instances/:instance_id/service_bindings/:id', function(req, res) {
-  res.send('respond with a resource');
+  console.log('BODY', req.body);
+  console.log('PARAMS', req.params);
+  res.status(200).json({});
 });
 
 module.exports = router;
