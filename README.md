@@ -10,34 +10,42 @@ vagrant ssh local
 On bosh lite VM:
 ```
 sudo su -
-apt-get -y install curl postgresql-client
+curl -sL https://deb.nodesource.com/setup | bash -
+apt-get -y install curl postgresql-client git-core nodejs
 curl -sSL https://get.docker.io/ubuntu/ | sudo sh
 docker -v
 service docker stop
-docker -d -H tcp://0.0.0.0:2375
-```
-
-On DEA (AKA "runner"):
-```
-curl 192.168.50.4:2375/info
+# fixup /etc/init/docker.conf: set DOCKER_OPTS="-H tcp://0.0.0.0:2375"
+service docker start
+# prestage the postgres image
+docker -H tcp://localhost:2375 pull frodenas/postgresql:latest
 ```
 
 ## Get broker registered and available:
 On host running bosh lite:
 ```
+cd ~/bosh-lite
+vagrant ssh local
+```
+
+On bosh lite VM:
+```
 git clone https://github.com/danielkennedy/cf-broker-demo
 cd cf-broker-demo
+npm install
+export DOCKER_URL=tcp://0.0.0.0:2375
+npm start
+```
+
+On host running bosh lite:
+```
 cf api https://api.10.244.0.34.xip.io --skip-ssl-validation
 cf auth admin admin
 cf create-org me
 cf target -o me
 cf create-space test
 cf target -s test
-cf push cf-broker-demo -i 1 -m 128M --no-start
-cf set-env cf-broker-demo DOCKER_HOST http://192.168.50.4
-cf set-env cf-broker-demo DOCKER_PORT 2375
-cf push cf-broker-demo
-cf create-service-broker my-demo-broker username password http://cf-broker-demo.10.244.0.34.xip.io
+cf create-service-broker my-demo-broker username password http://192.168.50.4:3000
 cf curl /v2/service_plans -X 'GET' | grep \"url\"
 cf curl URL_FROM_PREVIOUS_STEP -X 'PUT' -d '{"public":true}'
 cf marketplace

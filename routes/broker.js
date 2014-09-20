@@ -26,19 +26,10 @@ router.get('/catalog', function(req, res) {
 });
 
 /*
-REQUEST FIELD TYPE  DESCRIPTION
-service_id* string  The ID of the service within the catalog above. While not strictly necessary, some brokers might make use of this ID.
-plan_id*  string  The ID of the plan within the above service (from the catalog endpoint) that the user would like provisioned. Because plans have identifiers unique to a broker, this is enough information to determine what to provision.
-organization_guid*  string  The Cloud Controller GUID of the organization under which the service is to be provisioned. Although most brokers will not use this field, it could be helpful in determining data placement or applying custom business rules.
-space_guid* string  Similar to organization_guid, but for the space.
-
 STATUS CODE DESCRIPTION
 201 Created Service instance has been created. The expected response body is below.
 409 Conflict  Shall be returned if the requested service instance already exists. The expected response body is “{}”
 200 OK  May be returned if the service instance already exists and the requested parameters are identical to the existing service instance. The expected response body is below.
-
-RESPONSE FIELD  TYPE  DESCRIPTION
-dashboard_url string  The URL of a web-based management user interface for the service instance; we refer to this as a service dashboard. The URL should contain enough information for the dashboard to identify the resource being accessed (“9189kdfsk0vfnku” in the example below). For information on how users can authenticate with service dashboards via SSO, see Dashboard Single Sign-On.
 */
 /* cf create-service */
 router.put('/service_instances/:id', function(req, res) {
@@ -47,10 +38,13 @@ router.put('/service_instances/:id', function(req, res) {
   console.log('PARAMS', req.params);
   //{"name"=>"cf-3394a0b4-7892-43ab-92c0-8b0d032b5d24", "Entrypoint"=>nil, "DisableNetwork"=>false}
 
+  // FIXME: create container, start container
+
   // Check to see if the requested service instance already exists
   if (db[req.params.id]) {
     res.status(409).json({});
   } else {
+    console.log('Attempting to create docker:', process.env.DOCKER_URL + '/containers/create');
     request.post(process.env.DOCKER_URL + '/containers/create', {
       json: {
         "Hostname":"",
@@ -79,6 +73,36 @@ router.put('/service_instances/:id', function(req, res) {
         "ExposedPorts":{}
       }
     }, function (err, response, body) {
+      console.log('DOCKER CREATE:', err, response, body);
+      if (err) {
+        console.error('DOCKER CREATE ERROR:', err);
+        res.status(500).json({
+          error: err
+        });
+      } else {
+        console.log('DOCKER CREATE RESULT:', body);
+        // store a guid associated with this instance
+        db[req.params.id] = response;
+        res.status(201).json({
+          dashboard_url: dashboard_url
+        });
+      }
+    });
+  }
+});
+
+/* cf delete-service */
+/*
+STATUS CODE DESCRIPTION
+200 OK  Service instance was deleted. The expected response body is “{}”
+410 Gone  Shall be returned if the service instance does not exist. The expected response body is “{}”
+*/
+router.delete('/service_instances/:id', function(req, res) {
+  console.log('BODY', req.body);
+  console.log('PARAMS', req.params);
+  // FIXME: container.kill, container.remove, remove guid and association for instance!!!
+  /*
+    request.post(process.env.DOCKER_URL + '/containers/create', {}, function (err, response, body) {
       if (err) {
         console.error('DOCKER CREATE ERROR:', err);
         res.status(500).json({
@@ -93,26 +117,9 @@ router.put('/service_instances/:id', function(req, res) {
         });
       }
     });
-  }
-});
-
-/* cf delete-service */
-/*
-QUERY-STRING FIELD  TYPE  DESCRIPTION
-service_id* string  ID of the service from the catalog. While not strictly necessary, some brokers might make use of this ID.
-plan_id*  string  ID of the plan from the catalog. While not strictly necessary, some brokers might make use of this ID.
-
-STATUS CODE DESCRIPTION
-200 OK  Service instance was deleted. The expected response body is “{}”
-410 Gone  Shall be returned if the service instance does not exist. The expected response body is “{}”
-
-*/
-router.delete('/service_instances/:id', function(req, res) {
-  console.log('BODY', req.body);
-  console.log('PARAMS', req.params);
-  // FIXME: container.kill, container.remove, remove guid and association for instance!!!
+  */
   delete db[req.params.id];
-  res.status(200);
+  res.status(200).json({});
 });
 
 /*
