@@ -8,18 +8,21 @@ var db = {
   bindings: {}, // binding_guid-to-app_guid association
 }
 
+var service_guid = uuid.v4();
+var free_plan_guid = uuid.v4();
+
 /* cf marketplace */
 router.get('/catalog', function(req, res) {
   res.status(200).json({
     services: [{
-      id: '12345', //  string  An identifier used to correlate this service in future requests to the catalog. This must be unique within Cloud Foundry, using a GUID is recommended.
-      name: 'awesome-sauce', // string  The CLI-friendly name of the service that will appear in the catalog. All lowercase, no spaces.
-      description: 'This is where the magic happens', // string  A short description of the service that will appear in the catalog.
-      bindable: true, // boolean Whether the service can be bound to applications.
+      id: service_guid,
+      name: 'awesome-sauce',
+      description: 'This is where the magic happens',
+      bindable: true,
       plans: [{
-        id: '54321', // string  An identifier used to correlate this plan in future requests to the catalog. This must be unique within Cloud Foundry, using a GUID is recommended.
-        name: 'free-as-in-beer', // string  The CLI-friendly name of the plan that will appear in the catalog. All lowercase, no spaces.
-        description: 'The best things in life are free' // string  A short description of the service that will appear in the catalog.
+        id: free_plan_guid,
+        name: 'free-as-in-beer',
+        description: 'The best things in life are free'
       }]
     }]
   });
@@ -36,12 +39,12 @@ router.put('/service_instances/:id', function(req, res) {
   var dashboard_url = 'http://pivotal.io';
   console.log('BODY', req.body);
   console.log('PARAMS', req.params);
-  //{"name"=>"cf-3394a0b4-7892-43ab-92c0-8b0d032b5d24", "Entrypoint"=>nil, "DisableNetwork"=>false}
+  var instanceId = req.params.id;
 
   // FIXME: create container, start container
 
   // Check to see if the requested service instance already exists
-  if (db[req.params.id]) {
+  if (db[instanceId]) {
     res.status(409).json({});
   } else {
     console.log('Attempting to create docker:', process.env.DOCKER_URL + '/containers/create');
@@ -73,18 +76,29 @@ router.put('/service_instances/:id', function(req, res) {
         "ExposedPorts":{}
       }
     }, function (err, response, body) {
-      console.log('DOCKER CREATE:', err, response, body);
       if (err) {
-        console.error('DOCKER CREATE ERROR:', err);
+        console.error('DOCKER CREATE ERROR:', err, body);
         res.status(500).json({
           error: err
         });
       } else {
+        var containerId = body.Id;
         console.log('DOCKER CREATE RESULT:', body);
-        // store a guid associated with this instance
-        db[req.params.id] = response;
-        res.status(201).json({
-          dashboard_url: dashboard_url
+        // Now that it's created, RUN it!
+        request.post(process.env.DOCKER_URL + '/containers/' + containerId + '/start', function (err, response, body) {
+          console.log('DOCKER RUN RESULT:', err, response, body);
+          if (err) {
+            console.error(err);
+            res.status(500).json({
+              error: err
+            });
+          } else {
+            // store the docker ID associated with this instance ID
+            db.instances[instanceId] = containerId;
+            res.status(201).json({
+              dashboard_url: dashboard_url
+            });
+          }
         });
       }
     });
