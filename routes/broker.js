@@ -79,7 +79,7 @@ function dockerStart(options, callback) {
   }, function (err, response, body) {
     console.log('DOCKER START:', err, response, body);
     if (!err) {
-      console.log('DOCKER STARTED IMAGE', containerId 'with EXPOSEDPORT', exposedPort);
+      console.log('DOCKER STARTED IMAGE', containerId, 'with EXPOSEDPORT', exposedPort);
     }
     callback(err, {
       exposedPort: exposedPort
