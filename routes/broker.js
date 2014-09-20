@@ -113,7 +113,7 @@ function createDatabase(options, callback) {
   var adminPassword = options.adminPassword;
   var databaseName  = uuid.v4();
   var connection = mysql.createConnection({
-    host     : dockerHost
+    host     : dockerHost,
     user     : 'admin',
     password : adminPassword
   });
@@ -170,7 +170,7 @@ router.put('/service_instances/:id', function(req, res) {
   } else {
     console.log('Attempting to create docker:', dockerUrl + '/containers/create');
     dockerCreate(function (err, result) {
-      if (err)
+      if (err) {
         console.error('DOCKER CREATE ERROR:', err, result);
         res.status(500).json({
           error: err
@@ -181,7 +181,7 @@ router.put('/service_instances/:id', function(req, res) {
         // Now that it's created, RUN it!
         dockerStart(result, function (err, result) {
           if (err) {
-            console.error(DOCKER START ERROR:', err);
+            console.error('DOCKER START ERROR:', err);
             res.status(500).json({
               error: err
             });
@@ -241,7 +241,7 @@ router.delete('/service_instances/:id', function(req, res) {
   } else {
     res.status(410).json({});
   }
-}
+});
 
 /*
 REQUEST FIELD TYPE  DESCRIPTION
