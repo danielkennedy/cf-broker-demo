@@ -8,7 +8,7 @@ var dockerHost = process.env.DOCKER_HOST;
 var dockerPort = process.env.DOCKER_PORT;
 var dockerUrl = 'http://' + dockerHost + ':' + dockerPort;
 
-var db = {
+var instances = {
 /*
   instances: {
     bindings: {}, // binding_guid-to-app_guid association
@@ -165,7 +165,7 @@ router.put('/service_instances/:id', function(req, res) {
   // FIXME: create container, start container
 
   // Check to see if the requested service instance already exists
-  if (db[instanceId]) {
+  if (instances[instanceId]) {
     res.status(409).json({});
   } else {
     console.log('Attempting to create docker:', dockerUrl + '/containers/create');
@@ -188,7 +188,7 @@ router.put('/service_instances/:id', function(req, res) {
           } else {
             var exposedPort = result.exposedPort;
             // store the docker ID associated with this instance ID
-            db.instances[instanceId] = {
+            instances[instanceId] = {
               containerId: containerId,
               username: 'admin',
               password: adminPassword,
@@ -216,23 +216,23 @@ router.delete('/service_instances/:id', function(req, res) {
   console.log('BODY', req.body);
   console.log('PARAMS', req.params);
   var instanceId = req.params.id;
-  if (db[instanceId]) {
-    var containerId = db[instanceId].containerId;
-    dockerStop(db[instanceId], function (err, result) {
+  if (instances[instanceId]) {
+    var containerId = instances[instanceId].containerId;
+    dockerStop(instances[instanceId], function (err, result) {
       if (err) {
         console.error('DOCKER STOP ERROR:', err);
         res.status(500).json({
           error: err
         });
       } else {
-        dockerRemove(db[instanceId], function (err, result) {
+        dockerRemove(instances[instanceId], function (err, result) {
           if (err) {
             console.error('DOCKER REMOVE ERROR:', err);
             res.status(500).json({
               error: err
             });
           } else {
-            delete db[instanceId];
+            delete instances[instanceId];
             res.status(200).json({});
           }
         });
