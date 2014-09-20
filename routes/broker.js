@@ -76,7 +76,9 @@ function dockerStart(options, callback) {
         "HostPort": exposedPort.toString(),
         "HostIp": "0.0.0.0"
       }]
-    }
+    },
+    "PublishAllPorts": "false",
+    "Privileged": "false",
   }, function (err, response, body) {
     console.log('DOCKER START:', err, response, body);
     if (!err) {
