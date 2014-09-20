@@ -11,14 +11,14 @@ On bosh lite VM:
 ```
 sudo su -
 curl -sL https://deb.nodesource.com/setup | bash -
-apt-get -y install curl postgresql-client git-core nodejs
+apt-get -y install curl mysql-client git-core nodejs
 curl -sSL https://get.docker.io/ubuntu/ | sudo sh
 docker -v
 service docker stop
 # fixup /etc/init/docker.conf: set DOCKER_OPTS="-H tcp://0.0.0.0:2375"
 service docker start
-# prestage the postgres image
-docker -H tcp://localhost:2375 pull frodenas/postgresql:latest
+# prestage the mysql image
+docker -H tcp://localhost:2375 pull mysql:latest
 ```
 
 ## Get broker registered and available:
@@ -51,8 +51,19 @@ cf curl URL_FROM_PREVIOUS_STEP -X 'PUT' -d '{"public":true}'
 cf marketplace
 cf create-service awesome-sauce free-as-in-beer my-super-awesome-service-instance
 cf services
+cf push spring-music -i 1 -m 512M -p spring-music.war --no-manifest
+cf bind-service spring-music my-super-awesome-service-instance
+cf push spring-music -i 1 -m 512M -p spring-music.war --no-manifest
 ```
 
-In bosh lite:
+On bosh lite vm:
 ```
+sudo su -
+docker -H tcp://0.0.0.0:2375 ps
+netstat -antp|grep 5432
+```
+
+On DEA:
+```
+
 ```
