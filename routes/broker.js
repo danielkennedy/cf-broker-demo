@@ -73,7 +73,8 @@ function dockerStart(options, callback) {
   request.post(dockerUrl + '/containers/' + containerId + '/start', {
     "PortBindings": {
       "3306/tcp": [{
-        "HostPort": exposedPort
+        "HostPort": exposedPort.toString(),
+        "HostIp": "0.0.0.0"
       }]
     }
   }, function (err, response, body) {
