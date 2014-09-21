@@ -28,7 +28,7 @@ function getRandomPort() {
 
 function dockerCreate(options, callback) {
   var instanceId = options.instanceId;
-  var adminPassword = uuid.v4();
+  var adminPassword = randomstring.generate();
   request.post(dockerUrl + '/containers/create', {
     json: {
       "AttachStderr": false,
@@ -115,14 +115,13 @@ function dockerRemove(options, callback) {
   });
 }
 
-function createDatabase(options, callback) {
+function databaseCreate(options, callback) {
   var databaseName  = randomstring.generate();
   var connectionOptions = {
     host     : options.host,
     port     : options.port,
     user     : options.adminUsername,
-    password : options.adminPassword,
-    database : '' // Required to get connection!!
+    password : options.adminPassword
   };
   console.log('Attempting connection to database:', connectionOptions);
   var connection = mysql.createConnection(connectionOptions);
@@ -146,6 +145,40 @@ function createDatabase(options, callback) {
       });
     });
   }, 10000); // 10 second delay to allow mysql availability
+}
+
+function databaseGrant(options, callback) {
+  var databaseName = options.databaseName;
+  var username = randomstring.generate();
+  var password = randomstring.generate();
+  var connectionOptions = {
+    host     : options.host,
+    port     : options.port,
+    user     : options.adminUsername,
+    password : options.adminPassword
+  };
+  var connection = mysql.createConnection(connectionOptions);
+  connection.connect(function (err) {
+    if (err) {
+      console.error('MYSQL CONNECTION ERROR:', err, err.stack);
+      return;
+    }
+    console.log('MYSQL CONNECTED');
+  });
+
+  var sql = "GRANT ALL PRIVILEGES ON " + databaseName + ".* to " + username + "@'%' IDENTIFIED BY '" + password + "' WITH GRANT OPTION";
+  console.log('GRANT Attempting to execute:', sql);
+  connection.query(sql, function(err, rows, fields) {
+    connection.end();
+    console.log('DATABASE GRANT:', err, rows, fields);
+    if (!err) {
+      console.log('DATABASE GRANT', databaseName);
+    }
+    callback(err, {
+      username: username,
+      password: password
+    });
+  });
 }
 
 /* cf marketplace */
@@ -211,8 +244,8 @@ router.put('/service_instances/:id', function(req, res) {
             // store the port for future credentials passing
             instances[instanceId].port = result.exposedPort;
 
-            console.log('Attempting to createDatabase:', instances[instanceId]);
-            createDatabase(instances[instanceId], function (err, result) {
+            console.log('Attempting to databaseCreate:', instances[instanceId]);
+            databaseCreate(instances[instanceId], function (err, result) {
               if (err) {
                 console.error('CREATE DATABASE ERROR:', err);
                   res.status(500).json({
@@ -289,6 +322,44 @@ syslog_drain_url  string  A URL to which Cloud Foundry should drain logs to for 
 router.put('/service_instances/:instance_id/service_bindings/:id', function(req, res) {
   console.log('BODY', req.body);
   console.log('PARAMS', req.params);
+  var instanceId = req.params.instance_id;
+  var bindingId = req.params.id;
+
+  // Check to see if the requested service instance already exists
+  if (instances[instanceId] && instances[instanceId].bindings[bindingId]) {
+    res.status(409).json({});
+  } else {
+    console.log('Attempting to bind to instance:', instanceId);
+    // Make a record of this attempt
+    instances[instanceId].bindings[bindingId] = {
+      bindingId: bindingId,
+      appId: req.body.app_guid,
+      username: randomstring.generate(),
+      password: randomstring.generate()
+    };
+    databaseGrant(instances[instanceId], function (err, result) {
+      if (err) {
+        console.error('DATABASE GRANT ERROR:', err, result);
+        res.status(500).json({
+          error: err
+        });
+      } else {
+        // Store user/pass for this binding
+        instances[instanceId].bindings[bindingId].username = result.username;
+        instances[instanceId].bindings[bindingId].password = result.password;
+        var credentials = {
+          "database" : instances[instanceId].databaseName,
+          "host" : instances[instanceId].host,
+          "port" : instances[instanceId].port,
+          "username" : instances[instanceId].bindings[bindingId].username,
+          "password" : instances[instanceId].bindings[bindingId].password
+        };
+        console.log('BIND RETURNING CREDS:', credentials);
+        res.status(201).json(credentials);
+      }
+    });
+  }
+
   // FIXME: Lookup binding association by binding guid (create if not exists) and return creds!!!
   res.status(201).json({
     credentials: {
