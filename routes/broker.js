@@ -125,24 +125,26 @@ function createDatabase(options, callback) {
   };
   console.log('Attempting connection to database:', connectionOptions);
   var connection = mysql.createConnection(connectionOptions);
-  connection.connect(function (err) {
-    if (err) {
-      console.error('MYSQL CONNECTION ERROR:', err, err.stack);
-      return;
-    }
-    console.log('MYSQL CONNECTED');
-  });
-
-  connection.query('CREATE DATABASE ' + databaseName, function(err, rows, fields) {
-    connection.end();
-    console.log('CREATE DATABASE:', err, rows, fields);
-    if (!err) {
-      console.log('CREATED DATABASE', databaseName);
-    }
-    callback(err, {
-      databaseName: databaseName
+  setTimeout(function () {
+    connection.connect(function (err) {
+      if (err) {
+        console.error('MYSQL CONNECTION ERROR:', err, err.stack);
+        return;
+      }
+      console.log('MYSQL CONNECTED');
     });
-  });
+
+    connection.query('CREATE DATABASE ' + databaseName, function(err, rows, fields) {
+      connection.end();
+      console.log('CREATE DATABASE:', err, rows, fields);
+      if (!err) {
+        console.log('CREATED DATABASE', databaseName);
+      }
+      callback(err, {
+        databaseName: databaseName
+      });
+    });
+  }, 10000);
 }
 
 /* cf marketplace */
