@@ -118,8 +118,8 @@ function createDatabase(options, callback) {
   var databaseName  = uuid.v4();
   var connectionOptions = {
     host     : dockerHost,
-    port     : options.exposedPort,
-    user     : 'admin',
+    port     : options.port,
+    user     : options.adminUsername,
     password : options.adminPassword
   };
   console.log('Attempting connection to database:', connectionOptions);
@@ -177,7 +177,7 @@ router.put('/service_instances/:id', function(req, res) {
     // Make a record of this attempt
     instances[instanceId] = {
       instanceId: instanceId,
-      username: 'admin',
+      adminUsername: 'admin',
       host: dockerHost,
       bindings: {}
     };
@@ -190,7 +190,7 @@ router.put('/service_instances/:id', function(req, res) {
       } else {
         // We're heading in the right direction. Store what we know:
         instances[instanceId].containerId = result.containerId;
-        instances[instanceId].password = result.adminPassword;
+        instances[instanceId].adminPassword = result.adminPassword;
         // Now that it's created, RUN it!
         dockerStart(result, function (err, result) {
           if (err) {
@@ -199,7 +199,6 @@ router.put('/service_instances/:id', function(req, res) {
               error: err
             });
           } else {
-            var exposedPort = result.exposedPort;
             // store the port for future credentials passing
             instances[instanceId].port = exposedPort;
             console.log('Attempting to createDatabase:', instances[instanceId]);
