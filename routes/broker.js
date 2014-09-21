@@ -204,7 +204,7 @@ router.put('/service_instances/:id', function(req, res) {
             var dbOptions = {
               debug: true,
               connectionLimit: 10,
-              host     : 'localhost',//dockerHost,
+              host     : instances[instanceId].host,
               port     : instances[instanceId].port,
               user     : 'root',//instances[instanceId].adminUsername,
               password : instances[instanceId].adminPassword
