@@ -116,6 +116,28 @@ function dockerRemove(options, callback) {
 
 function createDatabase(options, callback) {
   var databaseName  = uuid.v4();
+  var connectionOptions = {
+    host     : dockerHost,
+    port     : options.exposedPort,
+    user     : 'admin',
+    password : options.adminPassword,
+    debug:true
+  });
+  console.log('Attempting connection to database:', connectionOptions);
+  var connection = mysql.createConnection(connectionOptions);
+  connection.connect();
+
+  connection.query('CREATE DATABASE ' + databaseName, function(err, rows, fields) {
+    connection.end();
+    console.log('CREATE DATABASE:', err, rows, fields);
+    if (!err) {
+      console.log('CREATED DATABASE', databaseName);
+    }
+    callback(err, {
+      databaseName: databaseName
+    });
+  });
+/*
   options.pool.getConnection(function(err, connection) {
     // connected! (unless err is set)
     if (err) {
@@ -135,6 +157,7 @@ function createDatabase(options, callback) {
       });
     }
   });
+*/
 }
 
 /* cf marketplace */
