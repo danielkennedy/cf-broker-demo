@@ -202,6 +202,7 @@ router.put('/service_instances/:id', function(req, res) {
 
             // Create a contextual connection pool to the database:
             var dbOptions = {
+              connectionLimit: 10,
               host     : dockerHost,
               port     : instances[instanceId].port,
               user     : instances[instanceId].adminUsername,
@@ -209,6 +210,9 @@ router.put('/service_instances/:id', function(req, res) {
             };
             console.log('CREATING POOL:', dbOptions);
             instances[instanceId].pool = mysql.createPool(dbOptions);
+            instances[instanceId].pool.on('connection', function (connection) {
+              console.log('POOL GOT CONNECTION:', connection);
+            });
 
             console.log('Attempting to createDatabase:', instances[instanceId]);
             createDatabase(instances[instanceId], function (err, result) {
