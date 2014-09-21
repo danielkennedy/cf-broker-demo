@@ -71,11 +71,14 @@ function dockerStart(options, callback) {
   var exposedPort = getRandomPort();
   var containerId = options.containerId;
   request.post(dockerUrl + '/containers/' + containerId + '/start', {
+    "PublishAllPorts": true
+/*
     "PortBindings": {
       "3306": [{
         "HostPort": exposedPort.toString()
       }]
     }
+*/
   }, function (err, response, body) {
     console.log('DOCKER START:', err, response, body);
     if (!err) {
