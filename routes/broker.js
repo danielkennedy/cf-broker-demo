@@ -71,8 +71,28 @@ function dockerStart(options, callback) {
   var exposedPort = getRandomPort();
   var containerId = options.containerId;
   request.post(dockerUrl + '/containers/' + containerId + '/start', {
-    "PublishAllPorts": true
+    "HostConfig": {
+        "Binds": null,
+        "CapAdd": null,
+        "CapDrop": null,
+        "ContainerIDFile": "",
+        "Devices": null,
+        "Dns": null,
+        "DnsSearch": null,
+        "Links": null,
+        "LxcConf": null,
+        "NetworkMode": "",
+        "PortBindings": {"3306/tcp":[{ "HostPort": "11022" }]},
+        "Privileged": false,
+        "PublishAllPorts": true,
+        "RestartPolicy": {
+            "MaximumRetryCount": 0,
+            "Name": ""
+        },
+        "VolumesFrom": null
+    }
 /*
+    "PublishAllPorts": true
     "PortBindings": {
       "3306": [{
         "HostPort": exposedPort.toString()
