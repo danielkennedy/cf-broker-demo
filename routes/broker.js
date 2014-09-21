@@ -115,12 +115,12 @@ function dockerRemove(options, callback) {
 }
 
 function createDatabase(options, callback) {
-  var adminPassword = options.adminPassword;
   var databaseName  = uuid.v4();
   var connection = mysql.createConnection({
     host     : dockerHost,
+    port     : options.exposedPort,
     user     : 'admin',
-    password : adminPassword
+    password : options.adminPassword
   });
 
   connection.connect();
