@@ -3,6 +3,7 @@ var express = require('express');
 var uuid = require('node-uuid');
 var mysql = require('mysql');
 var router = express.Router();
+var randomstring = require('randomstring');
 
 var dockerHost = process.env.DOCKER_HOST;
 var dockerPort = process.env.DOCKER_PORT;
@@ -115,7 +116,7 @@ function dockerRemove(options, callback) {
 }
 
 function createDatabase(options, callback) {
-  var databaseName  = uuid.v4();
+  var databaseName  = randomstring.generate();
   var connectionOptions = {
     host     : options.host,
     port     : options.port,
