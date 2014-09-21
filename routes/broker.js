@@ -116,12 +116,14 @@ function dockerRemove(options, callback) {
 
 function createDatabase(options, callback) {
   var databaseName  = uuid.v4();
-  var connection = mysql.createConnection({
+  var connectionOptions = {
     host     : dockerHost,
     port     : options.exposedPort,
     user     : 'admin',
     password : options.adminPassword
-  });
+  };
+  console.log('Attempting connection to database:', connectionOptions);
+  var connection = mysql.createConnection(connectionOptions);
 
   connection.connect();
 
@@ -200,6 +202,7 @@ router.put('/service_instances/:id', function(req, res) {
             var exposedPort = result.exposedPort;
             // store the port for future credentials passing
             instances[instanceId].port = exposedPort;
+            console.log('Attempting to createDatabase:', instances[instanceId]);
             createDatabase(instances[instanceId], function (err, result) {
               if (err) {
                 console.error('CREATE DATABASE ERROR:', err);
