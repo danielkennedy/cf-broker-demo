@@ -122,7 +122,7 @@ function createDatabase(options, callback) {
     user     : 'admin',
     password : options.adminPassword,
     debug:true
-  });
+  };
   console.log('Attempting connection to database:', connectionOptions);
   var connection = mysql.createConnection(connectionOptions);
   connection.connect();
