@@ -1,5 +1,11 @@
 cf-broker-demo
 ==============
+## Demo setup:
+1. Browser
+1. Terminal (local)
+1. Terminal (vagrant, to run docker and mysql)
+1. Terminal (vagrant, to run service broker)
+
 ## Get docker installed and working
 On host running bosh lite:
 ```
@@ -44,29 +50,40 @@ cf create-org me
 cf target -o me
 cf create-space test
 cf target -s test
-cf create-service-broker my-demo-broker username password http://192.168.50.4:3000
+cf push spring-music -i 1 -m 512M -p spring-music.war --no-manifest
+cf create-service-broker mysql-broker username password http://192.168.50.4:3000
 cf curl /v2/service_plans -X 'GET' | grep \"url\"
 cf curl URL_FROM_PREVIOUS_STEP -X 'PUT' -d '{"public":true}'
 cf marketplace
-cf create-service awesome-sauce free-as-in-beer my-super-awesome-service-instance
+cf create-service awesome-sauce free-as-in-beer mysql-music
 cf services
-cf push spring-music -i 1 -m 512M -p spring-music.war --no-manifest
-cf bind-service spring-music my-super-awesome-service-instance
+cf bind-service spring-music mysql-music
 cf push spring-music -i 1 -m 512M -p spring-music.war --no-manifest
 ```
+
+In browser
+1. Navigate to http://spring-music.10.244.0.34.xip.io/
+1. Add an album
 
 On bosh lite vm:
 ```
 sudo su -
 docker -H tcp://0.0.0.0:2375 ps
-netstat -antp|grep 5432
+docker -H tcp://0.0.0.0:2375 port CONTAINER_ID 3306
+netstat -antp|grep EXPOSED_PORT
+mysql --host=0.0.0.0 --port=EXPOSED_PORT --database=DB_FROM_CREDS --user=USER_FROM_CREDS --password=PASSWORD_FROM_CREDS
+SHOW TABLES;
+
 ```
 
-On DEA:
+On host running bosh lite:
 ```
-
+cf services
+cf unbind-service spring-music mysql-music
+cf services
+cf push spring-music -i 1 -m 512M -p spring-music.war --no-manifest
+cf delete-service mysql-music -f
 ```
-
 ## Node/MySQL Stuff:
 ```
 node

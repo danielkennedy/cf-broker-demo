@@ -351,6 +351,7 @@ router.put('/service_instances/:instance_id/service_bindings/:id', function(req,
           "database" : instances[instanceId].databaseName,
           "host" : instances[instanceId].host,
           "port" : instances[instanceId].port,
+          "user" : instances[instanceId].bindings[bindingId].username,
           "username" : instances[instanceId].bindings[bindingId].username,
           "password" : instances[instanceId].bindings[bindingId].password
         };
