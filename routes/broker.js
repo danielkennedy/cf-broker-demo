@@ -116,26 +116,23 @@ function dockerRemove(options, callback) {
 
 function createDatabase(options, callback) {
   var databaseName  = uuid.v4();
-  var connectionOptions = {
-    host     : dockerHost,
-    port     : options.port,
-    user     : options.adminUsername,
-    password : options.adminPassword
-  };
   console.log('Attempting connection to database:', connectionOptions);
-  var connection = mysql.createConnection(connectionOptions);
-
-  connection.connect();
-
-  connection.query('CREATE DATABASE ' + databaseName, function(err, rows, fields) {
-    connection.end();
-    console.log('CREATE DATABASE:', err, rows, fields);
-    if (!err) {
-      console.log('CREATED DATABASE', databaseName);
+  options.pool.getConnection(function(err, connection) {
+    // connected! (unless err is set)
+    if (err) {
+      callback(err, {});
+    } else {
+      connection.query('CREATE DATABASE ' + databaseName, function(err, rows, fields) {
+        connection.end();
+        console.log('CREATE DATABASE:', err, rows, fields);
+        if (!err) {
+          console.log('CREATED DATABASE', databaseName);
+        }
+        callback(err, {
+          databaseName: databaseName
+        });
+      });
     }
-    callback(err, {
-      databaseName: databaseName
-    });
   });
 }
 
@@ -201,6 +198,15 @@ router.put('/service_instances/:id', function(req, res) {
           } else {
             // store the port for future credentials passing
             instances[instanceId].port = result.exposedPort;
+
+            // Create a contextual connection pool to the database:
+            instances[instanceId].pool  = mysql.createPool({
+              host     : dockerHost,
+              port     : instances[instanceId].port,
+              user     : instances[instanceId].adminUsername,
+              password : instances[instanceId].adminPassword
+            });
+
             console.log('Attempting to createDatabase:', instances[instanceId]);
             createDatabase(instances[instanceId], function (err, result) {
               if (err) {
