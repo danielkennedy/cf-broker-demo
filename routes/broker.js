@@ -121,7 +121,8 @@ function createDatabase(options, callback) {
     port     : options.port,
     user     : options.adminUsername,
     password : options.adminPassword,
-    debug    : true
+    debug    : true,
+    connectTimeout: 2000
   };
   console.log('Attempting connection to database:', connectionOptions);
   var connection = mysql.createConnection(connectionOptions);
