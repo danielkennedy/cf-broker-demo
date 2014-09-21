@@ -200,7 +200,7 @@ router.put('/service_instances/:id', function(req, res) {
             });
           } else {
             // store the port for future credentials passing
-            instances[instanceId].port = exposedPort;
+            instances[instanceId].port = result.exposedPort;
             console.log('Attempting to createDatabase:', instances[instanceId]);
             createDatabase(instances[instanceId], function (err, result) {
               if (err) {
