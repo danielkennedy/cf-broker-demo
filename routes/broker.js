@@ -52,7 +52,7 @@ function dockerCreate(callback) {
       "WorkingDir":null,
       "NetworkDisabled": false,
       "ExposedPorts":{
-        //"3306/tcp": {}
+        "3306/tcp": {}
       }
     }
   }, function (err, response, body) {
