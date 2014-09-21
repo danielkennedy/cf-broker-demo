@@ -355,18 +355,10 @@ router.put('/service_instances/:instance_id/service_bindings/:id', function(req,
           "password" : instances[instanceId].bindings[bindingId].password
         };
         console.log('BIND RETURNING CREDS:', credentials);
-        res.status(201).json(credentials);
+        res.status(201).json({credentials: credentials, syslog_drain_url: ''});
       }
     });
   }
-
-  // FIXME: Lookup binding association by binding guid (create if not exists) and return creds!!!
-  res.status(201).json({
-    credentials: {
-      uri: 'http://super-awesome-endpoint.com'
-    },
-    syslog_drain_url: ''
-  });
 });
 
 /*
@@ -383,7 +375,14 @@ STATUS CODE DESCRIPTION
 router.delete('/service_instances/:instance_id/service_bindings/:id', function(req, res) {
   console.log('BODY', req.body);
   console.log('PARAMS', req.params);
-  res.status(200).json({});
+  var instanceId = req.params.instance_id;
+  var bindingId = req.params.id;
+  if (instances[instanceId] && instances[instanceId].bindings[bindingId]) {
+    delete instances[instanceId].bindings[bindingId];
+    res.status(200).json({});
+  } else {
+    res.status(410).json({});
+  }
 });
 
 module.exports = router;

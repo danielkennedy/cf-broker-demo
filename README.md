@@ -33,7 +33,7 @@ On bosh lite VM:
 git clone https://github.com/danielkennedy/cf-broker-demo
 cd cf-broker-demo
 npm install
-DOCKER_HOST=0.0.0.0 DOCKER_PORT=2375 npm start
+DOCKER_HOST=192.168.50.4 DOCKER_PORT=2375 npm start
 ```
 
 On host running bosh lite:
