@@ -202,6 +202,7 @@ router.put('/service_instances/:id', function(req, res) {
 
             // Create a contextual connection pool to the database:
             var dbOptions = {
+              debug: true,
               connectionLimit: 10,
               host     : dockerHost,
               port     : instances[instanceId].port,
