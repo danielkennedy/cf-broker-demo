@@ -145,7 +145,7 @@ function createDatabase(options, callback) {
         databaseName: databaseName
       });
     });
-  }, 3000); // 3 second delay to allow mysql availability
+  }, 10000); // 10 second delay to allow mysql availability
 }
 
 /* cf marketplace */
