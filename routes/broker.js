@@ -149,8 +149,8 @@ function databaseCreate(options, callback) {
 
 function databaseGrant(options, callback) {
   var databaseName = options.databaseName;
-  var username = randomstring.generate();
-  var password = randomstring.generate();
+  var username = randomstring.generate(16);
+  var password = randomstring.generate(16);
   var connectionOptions = {
     host     : options.host,
     port     : options.port,
