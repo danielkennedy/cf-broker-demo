@@ -119,14 +119,16 @@ function createDatabase(options, callback) {
   options.pool.getConnection(function(err, connection) {
     // connected! (unless err is set)
     if (err) {
+      console.error('POOL GET CONNECTION FAILURE:', err);
       callback(err, {});
     } else {
+      console.error('POOL GET CONNECTION SUCCESS');
       connection.query('CREATE DATABASE ' + databaseName, function(err, rows, fields) {
-        connection.end();
         console.log('CREATE DATABASE:', err, rows, fields);
         if (!err) {
           console.log('CREATED DATABASE', databaseName);
         }
+        connection.release();
         callback(err, {
           databaseName: databaseName
         });
