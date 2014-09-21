@@ -126,7 +126,13 @@ function createDatabase(options, callback) {
   };
   console.log('Attempting connection to database:', connectionOptions);
   var connection = mysql.createConnection(connectionOptions);
-  connection.connect();
+  connection.connect(function (err) {
+    if (err) {
+      console.error('MYSQL CONNECTION ERROR:', err, err.stack);
+      return;
+    }
+    console.log('MYSQL CONNECTED');
+  });
 
   connection.query('CREATE DATABASE ' + databaseName, function(err, rows, fields) {
     connection.end();
