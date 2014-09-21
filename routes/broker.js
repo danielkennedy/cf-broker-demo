@@ -117,11 +117,11 @@ function dockerRemove(options, callback) {
 function createDatabase(options, callback) {
   var databaseName  = uuid.v4();
   var connectionOptions = {
-    host     : dockerHost,
-    port     : options.exposedPort,
-    user     : 'admin',
+    host     : options.host,
+    port     : options.port,
+    user     : options.adminUsername,
     password : options.adminPassword,
-    debug:true
+    debug    : true
   };
   console.log('Attempting connection to database:', connectionOptions);
   var connection = mysql.createConnection(connectionOptions);
