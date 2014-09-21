@@ -166,7 +166,7 @@ function databaseGrant(options, callback) {
     console.log('MYSQL CONNECTED');
   });
 
-  var sql = "GRANT ALL PRIVILEGES ON " + databaseName + ".* to " + username + "@'%' IDENTIFIED BY '" + password + "' WITH GRANT OPTION";
+  var sql = "GRANT ALL PRIVILEGES ON " + databaseName + ".* TO '" + username + "'@'%' IDENTIFIED BY '" + password + "' WITH GRANT OPTION";
   console.log('GRANT Attempting to execute:', sql);
   connection.query(sql, function(err, rows, fields) {
     connection.end();
@@ -181,17 +181,51 @@ function databaseGrant(options, callback) {
   });
 }
 
+function databaseRevoke(options, callback) {
+  var databaseName = options.databaseName;
+  var username = randomstring.generate(16);
+  var password = randomstring.generate(16);
+  var connectionOptions = {
+    host     : options.host,
+    port     : options.port,
+    user     : options.adminUsername,
+    password : options.adminPassword
+  };
+  var connection = mysql.createConnection(connectionOptions);
+  connection.connect(function (err) {
+    if (err) {
+      console.error('MYSQL CONNECTION ERROR:', err, err.stack);
+      return;
+    }
+    console.log('MYSQL CONNECTED');
+  });
+
+  var sql = "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '" + username + "'@'%'";
+  console.log('REVOKE Attempting to execute:', sql);
+  connection.query(sql, function(err, rows, fields) {
+    connection.end();
+    console.log('DATABASE REVOKE:', err, rows, fields);
+    if (!err) {
+      console.log('DATABASE REVOKE', databaseName);
+    }
+    callback(err, {
+      username: username,
+      password: password
+    });
+  });
+}
+
 /* cf marketplace */
 router.get('/catalog', function(req, res) {
   res.status(200).json({
     services: [{
       id: service_guid,
-      name: 'awesome-sauce',
-      description: 'This is where the magic happens',
+      name: 'mysql-docker',
+      description: 'MySQL DB in a Docker back end',
       bindable: true,
       plans: [{
         id: free_plan_guid,
-        name: 'free-as-in-beer',
+        name: 'free',
         description: 'The best things in life are free'
       }]
     }]
@@ -392,8 +426,17 @@ router.delete('/service_instances/:instance_id/service_bindings/:id', function(r
   var instanceId = req.params.instance_id;
   var bindingId = req.params.id;
   if (instances[instanceId] && instances[instanceId].bindings[bindingId]) {
-    delete instances[instanceId].bindings[bindingId];
-    res.status(200).json({});
+    databaseRevoke(instances[instanceId], function (err, result) {
+      if (err) {
+        console.error('DATABASE REVOKE ERROR:', err, result);
+        res.status(500).json({
+          error: err
+        });
+      } else {
+        delete instances[instanceId].bindings[bindingId];
+        res.status(200).json({});
+      }
+    });
   } else {
     res.status(410).json({});
   }
