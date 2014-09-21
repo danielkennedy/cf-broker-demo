@@ -74,7 +74,7 @@ function dockerStart(options, callback) {
     "Binds":[],
     "Links":[],
     "LxcConf":[],
-    "PortBindings":{ "3306/tcp": [{ "HostPort": "11022" }] },
+    "PortBindings":{ "3306/tcp": [{ "HostPort": "11022", "HostIp": "0.0.0.0" }] },
     "PublishAllPorts":false,
     "Privileged":false,
     "Dns": ["8.8.8.8"],
