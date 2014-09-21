@@ -25,35 +25,38 @@ function getRandomPort() {
   return Math.floor(Math.random()*(max-min+1)+min);
 }
 
-function dockerCreate(callback) {
+function dockerCreate(options, callback) {
+  var instanceId = options.instanceId;
   var adminPassword = uuid.v4();
   request.post(dockerUrl + '/containers/create', {
     json: {
-      "Hostname":"",
+      "AttachStderr": false,
+      "AttachStdin": false,
+      "AttachStdout": false,
+      "Cmd": [],
+      "CpuShares": 0,
+      "Cpuset": "",
       "Domainname": "",
-      "User":"",
-      "Memory":0,
-      "MemorySwap":0,
-      "CpuShares":null,
-      "Cpuset": "0,1",
-      "AttachStdin":false,
-      "AttachStdout":true,
-      "AttachStderr":true,
-      "PortSpecs":null,
-      "Tty":false,
-      "OpenStdin":false,
-      "StdinOnce":false,
-      "Env":[
-        "MYSQL_PASS=" + adminPassword
+      "Entrypoint": null,
+      "Env": [
+        "MYSQL_PASS=" + adminPassword,
       ],
-      "Cmd":[],
-      "Image":"tutum/mysql",
-      "Volumes":{},
-      "WorkingDir":null,
-      "NetworkDisabled": false,
-      "ExposedPorts":{
+      "ExposedPorts": {
         "3306/tcp": {}
-      }
+      },
+      "Hostname": instanceId,
+      "Image": "tutum/mysql",
+      "Memory": 0,
+      "MemorySwap": 0,
+      "NetworkDisabled": false,
+      "OnBuild": null,
+      "OpenStdin": false,
+      "PortSpecs": null,
+      "StdinOnce": false,
+      "Tty": false,
+      "User": "",
+      "Volumes": {},
+      "WorkingDir": ""
     }
   }, function (err, response, body) {
     console.log('DOCKER CREATE:', err, response, body);
@@ -71,16 +74,18 @@ function dockerStart(options, callback) {
   var exposedPort = getRandomPort();
   var containerId = options.containerId;
   request.post(dockerUrl + '/containers/' + containerId + '/start', {
-    "Binds":null,
-    "Links":null,
-    "LxcConf":[],
-    "NetworkMode": "bridge",
-    "PortBindings":{ "3306/tcp": [{ "HostPort": "11022", "HostIp": "" }] },
-    "PublishAllPorts":false,
-    "Privileged":false,
-    "Dns": ["8.8.8.8"],
-    "VolumesFrom": null
-    //"PortBindings": { "3306/tcp": [{ "HostPort": "11022" }] } //exposedPort.toString() }] }
+    json: {
+      //"Binds":null,
+      //"Links":null,
+      //"LxcConf":[],
+      //"NetworkMode": "bridge",
+      //"PortBindings":{ "3306/tcp": [{ "HostPort": "11022", "HostIp": "" }] },
+      //"PublishAllPorts":false,
+      //"Privileged":false,
+      //"Dns": ["8.8.8.8"],
+      //"VolumesFrom": null
+      "PortBindings": { "3306/tcp": [{ "HostPort": exposedPort.toString() }] }
+    }
   }, function (err, response, body) {
     console.log('DOCKER START:', err, response, body);
     if (!err) {
@@ -174,7 +179,7 @@ router.put('/service_instances/:id', function(req, res) {
     res.status(409).json({});
   } else {
     console.log('Attempting to create docker:', dockerUrl + '/containers/create');
-    dockerCreate(function (err, result) {
+    dockerCreate({instanceId:instanceId}, function (err, result) {
       if (err) {
         console.error('DOCKER CREATE ERROR:', err, result);
         res.status(500).json({
