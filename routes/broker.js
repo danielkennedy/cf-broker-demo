@@ -39,7 +39,7 @@ function dockerCreate(callback) {
       "AttachStdin":false,
       "AttachStdout":true,
       "AttachStderr":true,
-      "PortSpecs":null, // FIXME: make a random port available (something over 50k)
+      "PortSpecs":null,
       "Tty":false,
       "OpenStdin":false,
       "StdinOnce":false,
@@ -71,11 +71,7 @@ function dockerStart(options, callback) {
   var exposedPort = getRandomPort();
   var containerId = options.containerId;
   request.post(dockerUrl + '/containers/' + containerId + '/start', {
-    "PortBindings": {
-      "3306/tcp": [{
-        "HostPort": exposedPort.toString()
-      }]
-    }
+    "PortBindings": { "3306/tcp": [{ "HostPort": "11022" }] } //exposedPort.toString() }] }
   }, function (err, response, body) {
     console.log('DOCKER START:', err, response, body);
     if (!err) {
