@@ -121,8 +121,7 @@ function createDatabase(options, callback) {
     port     : options.port,
     user     : options.adminUsername,
     password : options.adminPassword,
-    debug    : true,
-    connectTimeout: 2000
+    database : '' // Required to get connection!!
   };
   console.log('Attempting connection to database:', connectionOptions);
   var connection = mysql.createConnection(connectionOptions);
@@ -229,7 +228,7 @@ router.put('/service_instances/:id', function(req, res) {
           } else {
             // store the port for future credentials passing
             instances[instanceId].port = result.exposedPort;
-
+/*
             // Create a contextual connection pool to the database:
             var dbOptions = {
               debug: true,
@@ -244,7 +243,7 @@ router.put('/service_instances/:id', function(req, res) {
             instances[instanceId].pool.on('connection', function (connection) {
               console.log('POOL GOT CONNECTION:', connection);
             });
-
+*/
             console.log('Attempting to createDatabase:', instances[instanceId]);
             createDatabase(instances[instanceId], function (err, result) {
               if (err) {
