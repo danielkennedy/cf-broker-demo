@@ -75,16 +75,11 @@ function dockerStart(options, callback) {
   var containerId = options.containerId;
   request.post(dockerUrl + '/containers/' + containerId + '/start', {
     json: {
-      //"Binds":null,
-      //"Links":null,
-      //"LxcConf":[],
-      //"NetworkMode": "bridge",
-      //"PortBindings":{ "3306/tcp": [{ "HostPort": "11022", "HostIp": "" }] },
-      //"PublishAllPorts":false,
-      //"Privileged":false,
-      //"Dns": ["8.8.8.8"],
-      //"VolumesFrom": null
-      "PortBindings": { "3306/tcp": [{ "HostPort": exposedPort.toString() }] }
+      "PortBindings": {
+        "3306/tcp": [{
+          "HostPort": exposedPort.toString()
+        }]
+      }
     }
   }, function (err, response, body) {
     console.log('DOCKER START:', err, response, body);
@@ -171,6 +166,12 @@ router.put('/service_instances/:id', function(req, res) {
   console.log('BODY', req.body);
   console.log('PARAMS', req.params);
   var instanceId = req.params.id;
+  instances[instanceId] = {
+    instanceId: instanceId,
+    username: 'admin',
+    host: dockerHost,
+    bindings: {}
+  };
 
   // FIXME: create container, start container
 
@@ -179,15 +180,16 @@ router.put('/service_instances/:id', function(req, res) {
     res.status(409).json({});
   } else {
     console.log('Attempting to create docker:', dockerUrl + '/containers/create');
-    dockerCreate({instanceId:instanceId}, function (err, result) {
+    dockerCreate(instances[instanceId], function (err, result) {
       if (err) {
         console.error('DOCKER CREATE ERROR:', err, result);
         res.status(500).json({
           error: err
         });
       } else {
-        var containerId = result.containerId;
-        var adminPassword = result.adminPassword;
+        // We're heading in the right direction. Store what we know:
+        instances[instanceId].containerId = result.containerId;
+        instances[instanceId].password = result.adminPassword;
         // Now that it's created, RUN it!
         dockerStart(result, function (err, result) {
           if (err) {
@@ -197,17 +199,21 @@ router.put('/service_instances/:id', function(req, res) {
             });
           } else {
             var exposedPort = result.exposedPort;
-            // store the docker ID associated with this instance ID
-            instances[instanceId] = {
-              containerId: containerId,
-              username: 'admin',
-              password: adminPassword,
-              host: dockerHost,
-              port: exposedPort,
-              bindings: {}
-            };
-            res.status(201).json({
-              dashboard_url: dashboard_url
+            // store the port for future credentials passing
+            instances[instanceId].port = exposedPort;
+            createDatabase(instances[instanceId], function (err, result) {
+              if (err) {
+                console.error('CREATE DATABASE ERROR:', err);
+                  res.status(500).json({
+                    error: err
+                  });
+              } else {
+                // Store the database name for future credentials passing
+                instances[instanceId].databaseName = result.databaseName;
+                res.status(201).json({
+                  dashboard_url: dashboard_url
+                });
+              }
             });
           }
         });
