@@ -116,7 +116,6 @@ function dockerRemove(options, callback) {
 
 function createDatabase(options, callback) {
   var databaseName  = uuid.v4();
-  console.log('Attempting connection to database:', connectionOptions);
   options.pool.getConnection(function(err, connection) {
     // connected! (unless err is set)
     if (err) {
