@@ -116,7 +116,6 @@ function dockerRemove(options, callback) {
 
 function createDatabase(options, callback) {
   var databaseName  = uuid.v4();
-/*
   var connectionOptions = {
     host     : options.host,
     port     : options.port,
@@ -143,26 +142,6 @@ function createDatabase(options, callback) {
     callback(err, {
       databaseName: databaseName
     });
-  });
-*/
-  options.pool.getConnection(function(err, connection) {
-    // connected! (unless err is set)
-    if (err) {
-      console.error('POOL GET CONNECTION FAILURE:', err);
-      callback(err, {});
-    } else {
-      console.error('POOL GET CONNECTION SUCCESS');
-      connection.query('CREATE DATABASE ' + databaseName, function(err, rows, fields) {
-        console.log('CREATE DATABASE:', err, rows, fields);
-        if (!err) {
-          console.log('CREATED DATABASE', databaseName);
-        }
-        connection.release();
-        callback(err, {
-          databaseName: databaseName
-        });
-      });
-    }
   });
 }
 
@@ -228,22 +207,6 @@ router.put('/service_instances/:id', function(req, res) {
           } else {
             // store the port for future credentials passing
             instances[instanceId].port = result.exposedPort;
-
-            // Create a contextual connection pool to the database:
-            var dbOptions = {
-              debug: true,
-              connectionLimit: 10,
-              host     : instances[instanceId].host,
-              port     : instances[instanceId].port,
-              user     : 'root',//instances[instanceId].adminUsername,
-              password : instances[instanceId].adminPassword,
-              database : ''
-            };
-            console.log('CREATING POOL:', dbOptions);
-            instances[instanceId].pool = mysql.createPool(dbOptions);
-            instances[instanceId].pool.on('connection', function (connection) {
-              console.log('POOL GOT CONNECTION:', connection);
-            });
 
             console.log('Attempting to createDatabase:', instances[instanceId]);
             createDatabase(instances[instanceId], function (err, result) {
