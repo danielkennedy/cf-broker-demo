@@ -205,8 +205,8 @@ router.put('/service_instances/:id', function(req, res) {
               debug: true,
               connectionLimit: 10,
               host     : 'localhost',//dockerHost,
-              port     : 3306,//instances[instanceId].port,
-              user     : instances[instanceId].adminUsername,
+              port     : instances[instanceId].port,
+              user     : 'root',//instances[instanceId].adminUsername,
               password : instances[instanceId].adminPassword
             };
             console.log('CREATING POOL:', dbOptions);
