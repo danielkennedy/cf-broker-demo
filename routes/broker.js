@@ -348,8 +348,21 @@ router.put('/service_instances/:instance_id/service_bindings/:id', function(req,
         instances[instanceId].bindings[bindingId].username = result.username;
         instances[instanceId].bindings[bindingId].password = result.password;
         var credentials = {
+          "uri" : "mysql://" + 
+                  instances[instanceId].bindings[bindingId].username + ":" + 
+                  instances[instanceId].bindings[bindingId].password + "@" + 
+                  instances[instanceId].host + ":" + 
+                  instances[instanceId].port + "/" + 
+                  instances[instanceId].databaseName + "?reconnect=true",
+          "jdbcurl" : "jdbc:mysql://" +
+                  instances[instanceId].bindings[bindingId].username + ":" + 
+                  instances[instanceId].bindings[bindingId].password + "@" + 
+                  instances[instanceId].host + ":" + 
+                  instances[instanceId].port + "/" + 
+                  instances[instanceId].databaseName,
           "database" : instances[instanceId].databaseName,
           "host" : instances[instanceId].host,
+          "hostname" : instances[instanceId].host,
           "port" : instances[instanceId].port,
           "user" : instances[instanceId].bindings[bindingId].username,
           "username" : instances[instanceId].bindings[bindingId].username,
