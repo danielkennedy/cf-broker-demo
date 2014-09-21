@@ -67,3 +67,12 @@ On DEA:
 ```
 
 ```
+
+## Node/MySQL Stuff:
+```
+node
+> var mysql=require('mysql');
+> var connection = mysql.createConnection({host:'0.0.0.0',port:55311,user:'admin',password:'d064e635-042a-431e-b0f7-7d0be1790eba',database:''});
+> connection.connect(function(err){if(err){console.error('failed', err);}});
+> connection.query('CREATE DATABASE newdatabase', function(err, rows, fields) {connection.end();console.log('CREATE DATABASE:', err, rows, fields);if (!err) {console.log('CREATED DATABASE');}});
+```

@@ -116,6 +116,7 @@ function dockerRemove(options, callback) {
 
 function createDatabase(options, callback) {
   var databaseName  = uuid.v4();
+/*
   var connectionOptions = {
     host     : options.host,
     port     : options.port,
@@ -143,7 +144,7 @@ function createDatabase(options, callback) {
       databaseName: databaseName
     });
   });
-/*
+*/
   options.pool.getConnection(function(err, connection) {
     // connected! (unless err is set)
     if (err) {
@@ -163,7 +164,6 @@ function createDatabase(options, callback) {
       });
     }
   });
-*/
 }
 
 /* cf marketplace */
@@ -228,7 +228,7 @@ router.put('/service_instances/:id', function(req, res) {
           } else {
             // store the port for future credentials passing
             instances[instanceId].port = result.exposedPort;
-/*
+
             // Create a contextual connection pool to the database:
             var dbOptions = {
               debug: true,
@@ -236,14 +236,15 @@ router.put('/service_instances/:id', function(req, res) {
               host     : instances[instanceId].host,
               port     : instances[instanceId].port,
               user     : 'root',//instances[instanceId].adminUsername,
-              password : instances[instanceId].adminPassword
+              password : instances[instanceId].adminPassword,
+              database : ''
             };
             console.log('CREATING POOL:', dbOptions);
             instances[instanceId].pool = mysql.createPool(dbOptions);
             instances[instanceId].pool.on('connection', function (connection) {
               console.log('POOL GOT CONNECTION:', connection);
             });
-*/
+
             console.log('Attempting to createDatabase:', instances[instanceId]);
             createDatabase(instances[instanceId], function (err, result) {
               if (err) {
