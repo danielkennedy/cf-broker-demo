@@ -16,6 +16,7 @@ var freePlanGuid = uuid.v4();
 var instancePort = 50001;
 
 function getRandomPort() {
+  // FIXME: Of course, this will only give you about 15k instances. Ever. With no reuse.
   return instancePort++;
 }
 
