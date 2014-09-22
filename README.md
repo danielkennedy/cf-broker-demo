@@ -1,10 +1,12 @@
 cf-broker-demo
 ==============
 ## Demo setup:
+
+Need the following windows open:
 1. Browser
-1. Terminal (local, for cf commands)
-1. Terminal (vagrant, to run docker and mysql)
-1. Terminal (vagrant, to run service broker)
+1. "CF Terminal" (local, for cf commands)
+1. "Docker Terminal" Terminal (vagrant, to run docker and mysql)
+1. "Broker Terminal" (vagrant, to run service broker)
 
 ## Get bosh lite up and running
 cd ~/code/bosh-lite-demo
@@ -28,7 +30,7 @@ service docker stop
 # fixup /etc/init/docker.conf: set DOCKER_OPTS="-H tcp://0.0.0.0:2375"
 service docker start
 # prestage the mysql image
-docker -H tcp://localhost:2375 pull mysql:latest
+docker -H tcp://localhost:2375 pull tutum/mysql:latest
 ```
 
 ## Get broker registered and available:
