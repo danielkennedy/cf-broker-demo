@@ -58,6 +58,7 @@ cf create-org me
 cf target -o me
 cf create-space test
 cf target -s test
+cf marketplace
 cf create-service-broker mysql-docker-broker username password http://192.168.50.4:3000
 cf curl /v2/service_plans -X 'GET' | grep \"url\"
 cf curl URL_FROM_PREVIOUS_STEP -X 'PUT' -d '{"public":true}'
@@ -68,6 +69,7 @@ cf marketplace
 
 In CF Terminal:
 ```
+cd ~/code/dump-env
 cf create-service mysql-docker free mysql
 cf services
 cf push node-env -i 1 -m 128M --no-manifest
@@ -76,17 +78,16 @@ cf push node-env -i 1 -m 128M --no-manifest
 In Browser Window:
 
  1. Navigate to http://node-env.10.244.0.34.xip.io/
- 1. Add an album
+ 1. Notice VCAP_SERVICES is empty
 
 In Docker Terminal:
 ```
 sudo su -
 docker -H tcp://0.0.0.0:2375 ps
-docker -H tcp://0.0.0.0:2375 port CONTAINER_ID 3306
 netstat -antp|grep EXPOSED_PORT
-mysql --host=0.0.0.0 --port=EXPOSED_PORT --user=admin --password=ADMIN_PASSWORD
+mysql --host=0.0.0.0 --user=admin --port=EXPOSED_PORT --password=ADMIN_PASSWORD
 SHOW DATABASES;
-SELECT user from mysql.user;
+SELECT user FROM mysql.user;
 ```
 
 In CF Terminal:
@@ -101,12 +102,16 @@ mysql --host=0.0.0.0 --port=EXPOSED_PORT --database=DB_FROM_CREDS --user=USER_FR
 SHOW GRANTS;
 ```
 
+In Browser Window:
+
+ 1. Navigate to http://node-env.10.244.0.34.xip.io/
+ 1. Notice VCAP_SERVICES is NOT empty
+
 In CF Terminal:
 ```
 cf services
 cf unbind-service node-env mysql
 cf services
-cf push node-env -i 1 -m 128M --no-manifest
 ```
 
 In Docker Terminal:
