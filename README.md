@@ -9,8 +9,10 @@ Need the following windows open:
  1. "Broker Terminal" (vagrant, to run service broker)
 
 ## Get bosh lite up and running
+```
 cd ~/code/bosh-lite-demo
 ./binscripts/bosh-lite-cloudfoundry-demo
+```
 
 ## Get docker installed and working
 On host running bosh lite:
