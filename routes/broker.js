@@ -380,6 +380,7 @@ router.put('/service_instances/:instance_id/service_bindings/:id', function(req,
                   instances[instanceId].host + ":" + 
                   instances[instanceId].port + "/" + 
                   instances[instanceId].databaseName,
+          "name" : instances[instanceId].databaseName,
           "database" : instances[instanceId].databaseName,
           "host" : instances[instanceId].host,
           "hostname" : instances[instanceId].host,
