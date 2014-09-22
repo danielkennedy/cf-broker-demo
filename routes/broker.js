@@ -7,7 +7,7 @@ var randomstring = require('randomstring');
 
 var dockerHost = process.env.DOCKER_HOST;
 var dockerPort = process.env.DOCKER_PORT;
-var dockerUrl = 'http://' + dockerHost + ':' + dockerPort + '/v1.14';
+var dockerUrl = 'http://' + dockerHost + ':' + dockerPort;
 
 var instances = {
 /*
