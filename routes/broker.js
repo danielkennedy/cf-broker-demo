@@ -208,10 +208,7 @@ function databaseRevoke(options, binding, callback) {
     if (!err) {
       console.log('DATABASE REVOKE', databaseName);
     }
-    callback(err, {
-      username: username,
-      password: password
-    });
+    callback(err, {});
   });
 }
 
