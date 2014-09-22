@@ -26,9 +26,28 @@ function getRandomPort() {
   return Math.floor(Math.random()*(max-min+1)+min);
 }
 
+function getDatabaseConnection(options, callback) {
+  var connectionOptions = {
+    host     : options.host,
+    port     : options.port,
+    user     : options.adminUsername,
+    password : options.adminPassword
+  };
+  console.log('Attempting connection to database:', connectionOptions);
+  var connection = mysql.createConnection(connectionOptions);
+  connection.connect(function (err) {
+    if (err) {
+      console.error('MYSQL CONNECTION ERROR:', err, err.stack);
+    } else {
+      console.log('MYSQL CONNECTED');
+    }
+    callback(err, connection);
+  });
+}
+
 function dockerCreate(options, callback) {
   var instanceId = options.instanceId;
-  var adminPassword = randomstring.generate();
+  var adminPassword = randomstring.generate(8);
   request.post(dockerUrl + '/containers/create', {
     json: {
       "AttachStderr": false,
@@ -116,99 +135,69 @@ function dockerRemove(options, callback) {
 }
 
 function databaseCreate(options, callback) {
-  var databaseName  = randomstring.generate();
-  var connectionOptions = {
-    host     : options.host,
-    port     : options.port,
-    user     : options.adminUsername,
-    password : options.adminPassword
-  };
-  console.log('Attempting connection to database:', connectionOptions);
-  var connection = mysql.createConnection(connectionOptions);
+  var databaseName  = randomstring.generate(8);
   setTimeout(function () {
-    connection.connect(function (err) {
+    getDatabaseConnection(options, function (err, connection) {
       if (err) {
-        console.error('MYSQL CONNECTION ERROR:', err, err.stack);
-        return;
+        callback(err, {});
+      } else {
+        connection.query('CREATE DATABASE ' + databaseName, function(err, rows, fields) {
+          connection.end();
+          console.log('CREATE DATABASE:', err, rows, fields);
+          if (!err) {
+            console.log('CREATED DATABASE', databaseName);
+          }
+          callback(err, {
+            databaseName: databaseName
+          });
+        });
       }
-      console.log('MYSQL CONNECTED');
-    });
-
-    connection.query('CREATE DATABASE ' + databaseName, function(err, rows, fields) {
-      connection.end();
-      console.log('CREATE DATABASE:', err, rows, fields);
-      if (!err) {
-        console.log('CREATED DATABASE', databaseName);
-      }
-      callback(err, {
-        databaseName: databaseName
-      });
     });
   }, 10000); // 10 second delay to allow mysql availability
 }
 
 function databaseGrant(options, callback) {
   var databaseName = options.databaseName;
-  var username = randomstring.generate(16);
-  var password = randomstring.generate(16);
-  var connectionOptions = {
-    host     : options.host,
-    port     : options.port,
-    user     : options.adminUsername,
-    password : options.adminPassword
-  };
-  console.log('Attempting connection to database:', connectionOptions);
-  var connection = mysql.createConnection(connectionOptions);
-  connection.connect(function (err) {
+  var username = randomstring.generate(8);
+  var password = randomstring.generate(8);
+  getDatabaseConnection(options, function (err, connection) {
     if (err) {
-      console.error('MYSQL CONNECTION ERROR:', err, err.stack);
-      return;
+      callback(err, {});
+    } else {
+      var sql = "GRANT ALL PRIVILEGES ON " + databaseName + ".* TO '" + username + "'@'%' IDENTIFIED BY '" + password + "' WITH GRANT OPTION";
+      console.log('GRANT Attempting to execute:', sql);
+      connection.query(sql, function(err, rows, fields) {
+        connection.end();
+        console.log('DATABASE GRANT:', err, rows, fields);
+        if (!err) {
+          console.log('DATABASE GRANT', databaseName);
+        }
+        callback(err, {
+          username: username,
+          password: password
+        });
+      });
     }
-    console.log('MYSQL CONNECTED');
-  });
-
-  var sql = "GRANT ALL PRIVILEGES ON " + databaseName + ".* TO '" + username + "'@'%' IDENTIFIED BY '" + password + "' WITH GRANT OPTION";
-  console.log('GRANT Attempting to execute:', sql);
-  connection.query(sql, function(err, rows, fields) {
-    connection.end();
-    console.log('DATABASE GRANT:', err, rows, fields);
-    if (!err) {
-      console.log('DATABASE GRANT', databaseName);
-    }
-    callback(err, {
-      username: username,
-      password: password
-    });
   });
 }
 
 function databaseRevoke(options, binding, callback) {
   var databaseName = options.databaseName;
-  var connectionOptions = {
-    host     : options.host,
-    port     : options.port,
-    user     : options.adminUsername,
-    password : options.adminPassword
-  };
-  console.log('Attempting connection to database:', connectionOptions);
-  var connection = mysql.createConnection(connectionOptions);
-  connection.connect(function (err) {
+  getDatabaseConnection(options, function (err, connection) {
     if (err) {
-      console.error('MYSQL CONNECTION ERROR:', err, err.stack);
-      return;
+      callback(err, {});
+    } else {
+      var sql = "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '" + binding.username + "'@'%'";
+      console.log('REVOKE Attempting to execute:', sql);
+      connection.query(sql, function(err, rows, fields) {
+        connection.end();
+        console.log('DATABASE REVOKE:', err, rows, fields);
+        if (!err) {
+          console.log('DATABASE REVOKE', databaseName);
+        }
+        callback(err, {});
+      });
     }
-    console.log('MYSQL CONNECTED');
-  });
-
-  var sql = "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '" + binding.username + "'@'%'";
-  console.log('REVOKE Attempting to execute:', sql);
-  connection.query(sql, function(err, rows, fields) {
-    connection.end();
-    console.log('DATABASE REVOKE:', err, rows, fields);
-    if (!err) {
-      console.log('DATABASE REVOKE', databaseName);
-    }
-    callback(err, {});
   });
 }
 
@@ -365,8 +354,8 @@ router.put('/service_instances/:instance_id/service_bindings/:id', function(req,
     instances[instanceId].bindings[bindingId] = {
       bindingId: bindingId,
       appId: req.body.app_guid,
-      username: randomstring.generate(),
-      password: randomstring.generate()
+      username: randomstring.generate(8),
+      password: randomstring.generate(8)
     };
     databaseGrant(instances[instanceId], function (err, result) {
       if (err) {

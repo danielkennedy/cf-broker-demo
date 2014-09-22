@@ -2,7 +2,7 @@ cf-broker-demo
 ==============
 ## Demo setup:
 1. Browser
-1. Terminal (local)
+1. Terminal (local, for cf commands)
 1. Terminal (vagrant, to run docker and mysql)
 1. Terminal (vagrant, to run service broker)
 
