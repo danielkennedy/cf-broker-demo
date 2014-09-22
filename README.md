@@ -51,11 +51,11 @@ cf target -o me
 cf create-space test
 cf target -s test
 cf push spring-music -i 1 -m 512M -p spring-music.war --no-manifest
-cf create-service-broker mysql-broker username password http://192.168.50.4:3000
+cf create-service-broker mysql-docker-broker username password http://192.168.50.4:3000
 cf curl /v2/service_plans -X 'GET' | grep \"url\"
 cf curl URL_FROM_PREVIOUS_STEP -X 'PUT' -d '{"public":true}'
 cf marketplace
-cf create-service awesome-sauce free-as-in-beer mysql-music
+cf create-service mysql-docker free mysql-music
 cf services
 cf bind-service spring-music mysql-music
 cf push spring-music -i 1 -m 512M -p spring-music.war --no-manifest

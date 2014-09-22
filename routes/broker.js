@@ -60,7 +60,7 @@ function dockerCreate(options, callback) {
       "WorkingDir": ""
     }
   }, function (err, response, body) {
-    console.log('DOCKER CREATE:', err, response, body);
+    console.log('DOCKER CREATE:', err, body);
     if (!err) {
       console.log('DOCKER CREATED IMAGE', body.Id, 'with PASSWORD', adminPassword);
     }
@@ -83,7 +83,7 @@ function dockerStart(options, callback) {
       }
     }
   }, function (err, response, body) {
-    console.log('DOCKER START:', err, response, body);
+    console.log('DOCKER START:', err, body);
     if (!err) {
       console.log('DOCKER STARTED IMAGE', containerId, 'with EXPOSEDPORT', exposedPort);
     }
@@ -96,7 +96,7 @@ function dockerStart(options, callback) {
 function dockerStop(options, callback) {
   var containerId = options.containerId;
   request.post(dockerUrl + '/containers/' + containerId + '/stop', function (err, response, body) {
-    console.log('DOCKER STOP:', err, response, body);
+    console.log('DOCKER STOP:', err, body);
     if (!err) {
       console.log('DOCKER STOPPED IMAGE', containerId);
     }
@@ -107,7 +107,7 @@ function dockerStop(options, callback) {
 function dockerRemove(options, callback) {
   var containerId = options.containerId;
   request.del(dockerUrl + '/containers/' + containerId, function (err, response, body) {
-    console.log('DOCKER REMOVE:', err, response, body);
+    console.log('DOCKER REMOVE:', err, body);
     if (!err) {
       console.log('DOCKER REMOVED IMAGE', containerId);
     }
@@ -157,6 +157,7 @@ function databaseGrant(options, callback) {
     user     : options.adminUsername,
     password : options.adminPassword
   };
+  console.log('Attempting connection to database:', connectionOptions);
   var connection = mysql.createConnection(connectionOptions);
   connection.connect(function (err) {
     if (err) {
@@ -181,16 +182,15 @@ function databaseGrant(options, callback) {
   });
 }
 
-function databaseRevoke(options, callback) {
+function databaseRevoke(options, binding, callback) {
   var databaseName = options.databaseName;
-  var username = randomstring.generate(16);
-  var password = randomstring.generate(16);
   var connectionOptions = {
     host     : options.host,
     port     : options.port,
     user     : options.adminUsername,
     password : options.adminPassword
   };
+  console.log('Attempting connection to database:', connectionOptions);
   var connection = mysql.createConnection(connectionOptions);
   connection.connect(function (err) {
     if (err) {
@@ -200,7 +200,7 @@ function databaseRevoke(options, callback) {
     console.log('MYSQL CONNECTED');
   });
 
-  var sql = "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '" + username + "'@'%'";
+  var sql = "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '" + binding.username + "'@'%'";
   console.log('REVOKE Attempting to execute:', sql);
   connection.query(sql, function(err, rows, fields) {
     connection.end();
@@ -426,7 +426,7 @@ router.delete('/service_instances/:instance_id/service_bindings/:id', function(r
   var instanceId = req.params.instance_id;
   var bindingId = req.params.id;
   if (instances[instanceId] && instances[instanceId].bindings[bindingId]) {
-    databaseRevoke(instances[instanceId], function (err, result) {
+    databaseRevoke(instances[instanceId], instances[instanceId].bindings[bindingId], function (err, result) {
       if (err) {
         console.error('DATABASE REVOKE ERROR:', err, result);
         res.status(500).json({
