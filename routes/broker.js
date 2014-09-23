@@ -7,6 +7,7 @@ var randomstring = require('randomstring');
 
 var dockerHost = process.env.DOCKER_HOST;
 var dockerPort = process.env.DOCKER_PORT;
+var databaseHost = process.env.DATABASE_HOST || dockerHost;
 var dockerUrl = 'http://' + dockerHost + ':' + dockerPort;
 
 var instances = {};
@@ -234,7 +235,7 @@ router.put('/service_instances/:id', function(req, res) {
     instances[instanceId] = {
       instanceId: instanceId,
       adminUsername: 'admin',
-      host: dockerHost,
+      host: databaseHost,
       bindings: {}
     };
     dockerCreate(instances[instanceId], function (err, result) {
