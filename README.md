@@ -7,7 +7,7 @@ cf-broker-demo
 Need the following windows open:
  1. Browser
  1. "CF Terminal" (local, for cf commands)
- 1. "Docker Terminal" Terminal (Digital Ocean, to run docker and mysql)
+ 1. "Docker Terminal" (Digital Ocean, to run docker and mysql)
  1. "Broker Terminal" (vagrant, to run service broker)
 
 ### Get bosh lite up and running
