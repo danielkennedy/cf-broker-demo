@@ -48,7 +48,6 @@ DATABASE_HOST=104.131.126.213 DOCKER_HOST=localhost DOCKER_PORT=2375 npm start
 
 In CF Terminal:
 ```
-cd ~/code/dump-env
 cf api https://api.10.244.0.34.xip.io --skip-ssl-validation
 cf auth admin admin
 cf create-org me
