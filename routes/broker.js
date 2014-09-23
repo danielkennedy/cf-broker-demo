@@ -7,23 +7,18 @@ var randomstring = require('randomstring');
 
 var dockerHost = process.env.DOCKER_HOST;
 var dockerPort = process.env.DOCKER_PORT;
-var dockerUrl = 'http://' + dockerHost + ':' + dockerPort + '/v1.14';
+var databaseHost = process.env.DATABASE_HOST || dockerHost;
+var dockerUrl = 'http://' + dockerHost + ':' + dockerPort;
 
-var instances = {
-/*
-  instances: {
-    bindings: {}, // binding_guid-to-app_guid association
-  }, // instance_guid-to-docker_guid association
-*/
-}
+var instances = {};
 
-var service_guid = uuid.v4();
-var free_plan_guid = uuid.v4();
+var serviceGuid = uuid.v4();
+var freePlanGuid = uuid.v4();
+var instancePort = 50001;
 
 function getRandomPort() {
-  var min = 50001;
-  var max = 59999;
-  return Math.floor(Math.random()*(max-min+1)+min);
+  // FIXME: Of course, this will only give you about 15k instances. Ever. With no reuse.
+  return instancePort++;
 }
 
 function getDatabaseConnection(options, callback) {
@@ -205,12 +200,12 @@ function databaseRevoke(options, binding, callback) {
 router.get('/catalog', function(req, res) {
   res.status(200).json({
     services: [{
-      id: service_guid,
+      id: serviceGuid,
       name: 'mysql-docker',
       description: 'MySQL DB in a Docker back end',
       bindable: true,
       plans: [{
-        id: free_plan_guid,
+        id: freePlanGuid,
         name: 'free',
         description: 'The best things in life are free'
       }]
@@ -240,7 +235,7 @@ router.put('/service_instances/:id', function(req, res) {
     instances[instanceId] = {
       instanceId: instanceId,
       adminUsername: 'admin',
-      host: dockerHost,
+      host: databaseHost,
       bindings: {}
     };
     dockerCreate(instances[instanceId], function (err, result) {
