@@ -26,7 +26,8 @@ function getDatabaseConnection(options, callback) {
     host     : options.host,
     port     : options.port,
     user     : options.adminUsername,
-    password : options.adminPassword
+    password : options.adminPassword,
+    connectTimeout: 1000 // 1 second timeout for the internets :(
   };
   console.log('Attempting connection to database:', connectionOptions);
   var connection = mysql.createConnection(connectionOptions);
